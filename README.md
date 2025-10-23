@@ -82,7 +82,3 @@ Ele executa: listar -> salvar TEST-XYZ -> listar -> atualizar TEST-XYZ -> deleta
 - Emanuel Correia Tavares
 - Maria Clara Nunes Linhaes
 - Paulo Ricardo Estevam Batalha
-
----
-
-Se quiser, eu posso: adicionar persistência em JSON, criar um arquivo `README` mais completo com screenshots, ou preparar um pequeno script de deploy. Qual preferência?
