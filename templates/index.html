@@ -42,7 +42,7 @@
                 <h3>Adicionar Carro</h3>
                 <form id="add-carro-form" class="form">
                     <input type="text" id="modelo" name="modelo" placeholder="Modelo" required>
-                    <input type="number" id="preco" name="preco" placeholder="Preço" required>
+                    <input type="number" id="preco" name="preco" placeholder="Preço" required min="0" step="0.01">
                     <button type="submit" class="btn primary block">Salvar</button>
                 </form>
             </div>
@@ -51,7 +51,7 @@
                 <h3>Atualizar Carro</h3>
                 <form id="update-carro-form" class="form">
                     <input type="text" id="update-modelo" name="modelo" placeholder="Modelo" required>
-                    <input type="number" id="update-preco" name="preco" placeholder="Novo preço" required>
+                    <input type="number" id="update-preco" name="preco" placeholder="Novo preço" required min="0" step="0.01">
                     <button type="submit" class="btn secondary block">Atualizar</button>
                 </form>
             </div>

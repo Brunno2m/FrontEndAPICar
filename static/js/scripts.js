@@ -74,13 +74,17 @@ function getCarro(modelo) {
 }
 
 function saveCarro(modelo, preco) {
+    // validação básica
+    if(!modelo || String(modelo).trim().length === 0){ showToast('error','Preencha o modelo'); return; }
+    const precoNum = Number(preco);
+    if(!preco || isNaN(precoNum) || precoNum <= 0){ showToast('error','Preço deve ser maior que zero'); return; }
     showSpinner();
     fetch(`/api/saveCarro`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ modelo, preco })
+        body: JSON.stringify({ modelo, preco: precoNum })
     })
         .then(response => {
             hideSpinner();
@@ -96,6 +100,8 @@ function saveCarro(modelo, preco) {
 }
 
 function deleteCarro(modelo) {
+    if(!modelo || String(modelo).trim().length === 0){ showToast('error','Informe o modelo a deletar'); return; }
+    if(!confirm(`Confirma exclusão do modelo "${modelo}" ?`)) return;
     showSpinner();
     fetch(`/api/deleteCarro`, {
         method: 'POST',
@@ -116,13 +122,16 @@ function deleteCarro(modelo) {
 }
 
 function updateCarro(modelo, preco) {
+    if(!modelo || String(modelo).trim().length === 0){ showToast('error','Preencha o modelo'); return; }
+    const precoNum = Number(preco);
+    if(!preco || isNaN(precoNum) || precoNum <= 0){ showToast('error','Preço deve ser maior que zero'); return; }
     showSpinner();
     fetch(`/api/updateCarro`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ modelo, preco })
+        body: JSON.stringify({ modelo, preco: precoNum })
     })
         .then(response => {
             hideSpinner();
@@ -172,8 +181,9 @@ function renderCards(list){
     list.forEach(carro => {
         const div = document.createElement('div');
         div.className = 'carro-item';
+        const initials = (carro.modelo || '—').split(' ').map(s => s[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
         div.innerHTML = `
-            <div class="carro-thumb" aria-hidden="true"></div>
+            <div class="carro-thumb" aria-hidden="true"><span>${escapeHtml(initials)}</span></div>
             <div class="carro-details">
                 <div class="carro-title"><strong>${escapeHtml(carro.modelo || '—')}</strong></div>
                 <div class="carro-meta">ID: ${carro.id ?? '—'}</div>

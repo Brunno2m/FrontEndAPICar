@@ -3,6 +3,7 @@ from flask_cors import CORS
 import requests
 import os
 from functools import wraps
+import json
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
@@ -11,6 +12,7 @@ CORS(app)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 
 BACKEND_BASE = 'http://18.231.156.122:8080'
+CARROS_FILE = os.path.join(os.path.dirname(__file__), 'carros.json')
 
 # armazenamento em memória para permitir operações de escrita locais
 CARROS = []
@@ -18,16 +20,44 @@ CARROS_INITIALIZED = False
 
 def seed_carros_from_remote():
     global CARROS, CARROS_INITIALIZED
+    # 1) tentar carregar do arquivo local (persistência)
+    try:
+        if os.path.exists(CARROS_FILE):
+            with open(CARROS_FILE, 'r', encoding='utf-8') as f:
+                CARROS = json.load(f) or []
+                CARROS_INITIALIZED = True
+                app.logger.info(f"Carros inicializados a partir do arquivo local: {len(CARROS)} itens")
+                return True
+    except Exception:
+        app.logger.exception('Falha ao carregar CARROS do arquivo local')
+
+    # 2) fallback para backend remoto
     try:
         resp = requests.get(f"{BACKEND_BASE}/listarCarros", timeout=5)
         if resp.status_code == 200:
             CARROS = resp.json() if isinstance(resp.json(), list) else []
             CARROS_INITIALIZED = True
+            # persistir arquivo local para futuras execuções
+            try:
+                with open(CARROS_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(CARROS, f, ensure_ascii=False, indent=2)
+            except Exception:
+                app.logger.exception('Falha ao salvar CARROS localmente após seed remoto')
             app.logger.info(f"Carros inicializados a partir do backend remoto: {len(CARROS)} itens")
             return True
     except Exception:
         app.logger.exception('Não foi possível inicializar CARROS a partir do remoto')
     return False
+
+
+def save_carros_to_file():
+    try:
+        with open(CARROS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(CARROS, f, ensure_ascii=False, indent=2)
+        return True
+    except Exception:
+        app.logger.exception('Erro ao salvar CARROS em arquivo')
+        return False
 
 
 def proxy_request(method, path, params=None, json_data=None):
@@ -143,6 +173,8 @@ def api_save_carro():
     new_id = max([c.get('id', 0) for c in CARROS] or [0]) + 1
     novo = {'id': new_id, 'modelo': payload.get('modelo'), 'preco': payload.get('preco')}
     CARROS.append(novo)
+    # persistir
+    save_carros_to_file()
     return jsonify(novo), 201
 
 
@@ -156,6 +188,7 @@ def api_update_carro():
     for c in CARROS:
         if c.get('modelo') == modelo:
             c['preco'] = novo_preco
+            save_carros_to_file()
             return jsonify(c)
     return jsonify({'error': 'modelo não encontrado'}), 404
 
@@ -174,6 +207,7 @@ def api_delete_carro():
     CARROS[:] = [c for c in CARROS if c.get('modelo') != modelo]
     after = len(CARROS)
     if after < before:
+        save_carros_to_file()
         return jsonify({'deleted': True})
     return jsonify({'deleted': False, 'message': 'modelo não encontrado'}), 404
 

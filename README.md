@@ -76,6 +76,13 @@ Ele executa: listar -> salvar TEST-XYZ -> listar -> atualizar TEST-XYZ -> deleta
 - Adicionar validação de entrada mais robusta e tratamento de erros no front.
 - Melhorar UX (confirmação no delete, paginação na listagem, filtros).
 
+Implementações realizadas neste branch:
+
+- Persistência: o servidor agora salva `CARROS` em `carros.json` automaticamente após salvar/atualizar/deletar.
+- Confirmação: o frontend pede confirmação antes de deletar um modelo.
+- Validação: validação básica de `modelo` e `preço` foi adicionada no cliente.
+- Placeholders: os cards exibem iniciais do modelo como imagem placeholder.
+
 ## Time / Integrantes
 
 - Brunno de Melo Marques
