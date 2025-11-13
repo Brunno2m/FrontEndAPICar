@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for, flash
+from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import requests
 import os
@@ -13,6 +14,9 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 
 BACKEND_BASE = 'http://18.231.156.122:8080'
 CARROS_FILE = os.path.join(os.path.dirname(__file__), 'carros.json')
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
+ALLOWED_EXTENSIONS = {'png','jpg','jpeg','gif'}
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # armazenamento em memória para permitir operações de escrita locais
 CARROS = []
@@ -84,6 +88,29 @@ def proxy_request(method, path, params=None, json_data=None):
     except Exception as e:
         app.logger.exception('Erro ao conectar no backend remoto')
         return (jsonify({'error': 'Falha ao conectar no backend remoto', 'details': str(e)}), 502, {'Content-Type': 'application/json'})
+
+
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+    @app.route('/api/uploadImage', methods=['POST'])
+    def api_upload_image():
+        if 'file' not in request.files:
+            return jsonify({'error':'no file part'}), 400
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error':'no selected file'}), 400
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            # ensure unique filename by prefixing with timestamp
+            import time
+            filename = f"{int(time.time())}_{filename}"
+            dest = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(dest)
+            # return url path
+            return jsonify({'filename': filename, 'url': f"/static/uploads/{filename}"})
+        return jsonify({'error':'file type not allowed'}), 400
 
 
 def login_required(fn):
@@ -172,6 +199,9 @@ def api_save_carro():
         seed_carros_from_remote()
     new_id = max([c.get('id', 0) for c in CARROS] or [0]) + 1
     novo = {'id': new_id, 'modelo': payload.get('modelo'), 'preco': payload.get('preco')}
+    # aceitar imagem opcional (filename armazenado relativo a /static/uploads)
+    if payload.get('image'):
+        novo['image'] = payload.get('image')
     CARROS.append(novo)
     # persistir
     save_carros_to_file()
@@ -188,6 +218,9 @@ def api_update_carro():
     for c in CARROS:
         if c.get('modelo') == modelo:
             c['preco'] = novo_preco
+            # atualizar imagem se fornecida
+            if payload.get('image'):
+                c['image'] = payload.get('image')
             save_carros_to_file()
             return jsonify(c)
     return jsonify({'error': 'modelo não encontrado'}), 404

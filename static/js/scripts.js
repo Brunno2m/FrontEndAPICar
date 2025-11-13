@@ -6,6 +6,19 @@ let carrosData = [];
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('carros-container');
     if (container) container.textContent = 'Clique em "Listar Carros" para carregar a lista.';
+    // ligar submit do form add para usar nossa função saveCarro
+    const addForm = document.getElementById('add-carro-form');
+    if(addForm){
+        addForm.addEventListener('submit', function(e){ e.preventDefault(); const modelo = document.getElementById('modelo').value; const preco = document.getElementById('preco').value; saveCarro(modelo, preco); });
+    }
+    const updateForm = document.getElementById('update-carro-form');
+    if(updateForm){
+        updateForm.addEventListener('submit', function(e){ e.preventDefault(); const modelo = document.getElementById('update-modelo').value; const preco = document.getElementById('update-preco').value; updateCarro(modelo, preco); });
+    }
+    const deleteForm = document.getElementById('delete-carro-form');
+    if(deleteForm){
+        deleteForm.addEventListener('submit', function(e){ e.preventDefault(); const modelo = document.getElementById('delete-modelo').value; deleteCarro(modelo); });
+    }
 });
 
 // estado do painel de listagem
@@ -78,25 +91,34 @@ function saveCarro(modelo, preco) {
     if(!modelo || String(modelo).trim().length === 0){ showToast('error','Preencha o modelo'); return; }
     const precoNum = Number(preco);
     if(!preco || isNaN(precoNum) || precoNum <= 0){ showToast('error','Preço deve ser maior que zero'); return; }
-    showSpinner();
-    fetch(`/api/saveCarro`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ modelo, preco: precoNum })
-    })
-        .then(response => {
-            hideSpinner();
-            if (!response.ok) throw new Error('Falha ao salvar');
-            return response.json();
+
+    // checar arquivo de imagem (opcional)
+    const fileInput = document.getElementById('image');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+
+    const doSave = (imageFilename) => {
+        showSpinner();
+        fetch(`/api/saveCarro`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ modelo, preco: precoNum, image: imageFilename })
         })
-        .then(data => {
-            console.log('Carro salvo:', data);
-            showToast('success', 'Carro salvo');
-            listarCarros();
-        })
+        .then(response => { hideSpinner(); if(!response.ok) throw new Error('Falha ao salvar'); return response.json(); })
+        .then(data => { console.log('Carro salvo:', data); showToast('success','Carro salvo'); listarCarros(); if(fileInput) fileInput.value=''; })
         .catch(error => { hideSpinner(); console.error('Erro ao salvar carro:', error); showToast('error','Erro ao salvar'); });
+    };
+
+    if(file){
+        // upload primeiro
+        const fd = new FormData(); fd.append('file', file);
+        showSpinner();
+        fetch('/api/uploadImage', { method: 'POST', body: fd })
+            .then(r=>{ hideSpinner(); if(!r.ok) throw new Error('Falha no upload'); return r.json(); })
+            .then(res=>{ doSave(res.filename); })
+            .catch(err=>{ hideSpinner(); console.error('Erro upload:', err); showToast('error','Falha no upload de imagem'); });
+    } else {
+        doSave(null);
+    }
 }
 
 function deleteCarro(modelo) {
