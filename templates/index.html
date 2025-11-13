@@ -45,6 +45,13 @@
                     <input type="number" id="preco" name="preco" placeholder="Preço" required min="0" step="0.01">
                     <label class="muted">Imagem (opcional)</label>
                     <input type="file" id="image" name="image" accept="image/*">
+                    <div id="image-preview" class="image-preview muted" aria-hidden="true" style="display:none">
+                        <img id="image-preview-img" alt="Pré-visualização" style="display:block;max-width:100%;border-radius:8px" />
+                        <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+                            <button id="clear-image" type="button" class="btn secondary">Remover</button>
+                            <span id="image-preview-fname" class="muted" style="font-size:0.9rem"></span>
+                        </div>
+                    </div>
                     <button type="submit" class="btn primary block">Salvar</button>
                 </form>
             </div>

@@ -19,6 +19,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if(deleteForm){
         deleteForm.addEventListener('submit', function(e){ e.preventDefault(); const modelo = document.getElementById('delete-modelo').value; deleteCarro(modelo); });
     }
+    // configurar preview de imagem no formulário de adicionar
+    const imageInput = document.getElementById('image');
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('image-preview-img');
+    const previewFname = document.getElementById('image-preview-fname');
+    const clearBtn = document.getElementById('clear-image');
+    if(imageInput && preview && previewImg){
+        imageInput.addEventListener('change', function(e){
+            const f = e.target.files && e.target.files[0];
+            if(!f){ preview.style.display='none'; previewImg.src=''; previewFname.textContent=''; return; }
+            // only preview images
+            if(!f.type.startsWith('image/')){ showToast('error','Arquivo não é uma imagem'); imageInput.value=''; return; }
+            const reader = new FileReader();
+            reader.onload = function(ev){ previewImg.src = ev.target.result; preview.style.display='block'; previewFname.textContent = f.name; };
+            reader.readAsDataURL(f);
+        });
+    }
+    if(clearBtn && imageInput && preview){
+        clearBtn.addEventListener('click', function(){ imageInput.value=''; preview.style.display='none'; previewImg.src=''; previewFname.textContent=''; });
+    }
 });
 
 // estado do painel de listagem

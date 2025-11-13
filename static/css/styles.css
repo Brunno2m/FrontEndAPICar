@@ -42,6 +42,10 @@ body{
 .carro-thumb{width:76px;height:56px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));flex:0 0 76px;box-shadow:inset 0 -6px 18px rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;overflow:hidden}
 .carro-thumb span{font-size:0.95rem;letter-spacing:0.5px}
 .carro-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* preview de imagem no formulário */
+.image-preview{margin-top:8px;padding:8px;border-radius:8px;border:1px dashed rgba(15,23,42,0.04);background:linear-gradient(180deg, rgba(250,250,250,0.6), rgba(250,250,250,0.4));}
+.image-preview img{max-height:140px;width:auto;display:block;border-radius:8px}
 .carro-details{flex:1;min-width:0}
 .carro-title{font-size:1.02rem;margin-bottom:6px}
 .carro-meta{color:var(--muted);font-size:0.9rem;margin-bottom:6px}
