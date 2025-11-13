@@ -82,6 +82,7 @@ Implementações realizadas neste branch:
 - Confirmação: o frontend pede confirmação antes de deletar um modelo.
 - Validação: validação básica de `modelo` e `preço` foi adicionada no cliente.
 - Placeholders: os cards exibem iniciais do modelo como imagem placeholder.
+ - Placeholders: os cards exibem iniciais do modelo como imagem placeholder; quando um carro possui `image` (upload via formulário), a imagem real é exibida no card.
 
 ## Time / Integrantes
 

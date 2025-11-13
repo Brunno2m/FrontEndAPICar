@@ -204,8 +204,11 @@ function renderCards(list){
         const div = document.createElement('div');
         div.className = 'carro-item';
         const initials = (carro.modelo || '—').split(' ').map(s => s[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
+        const imageUrl = carro.image ? `/static/uploads/${carro.image}` : null;
         div.innerHTML = `
-            <div class="carro-thumb" aria-hidden="true"><span>${escapeHtml(initials)}</span></div>
+            <div class="carro-thumb" aria-hidden="true">
+                ${imageUrl ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(carro.modelo || 'imagem do carro')}">` : `<span>${escapeHtml(initials)}</span>`}
+            </div>
             <div class="carro-details">
                 <div class="carro-title"><strong>${escapeHtml(carro.modelo || '—')}</strong></div>
                 <div class="carro-meta">ID: ${carro.id ?? '—'}</div>
