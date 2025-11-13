@@ -1,10 +1,14 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for, flash
 from flask_cors import CORS
 import requests
 import os
+from functools import wraps
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
+
+# secret para sessões: configure via env `SECRET_KEY` em produção
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 
 BACKEND_BASE = 'http://18.231.156.122:8080'
 
@@ -52,9 +56,44 @@ def proxy_request(method, path, params=None, json_data=None):
         return (jsonify({'error': 'Falha ao conectar no backend remoto', 'details': str(e)}), 502, {'Content-Type': 'application/json'})
 
 
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not session.get('user'):
+            # preserve next
+            return redirect(url_for('login', next=request.path))
+        return fn(*args, **kwargs)
+    return wrapper
+
+
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    return render_template('index.html', user=session.get('user'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # credenciais podem vir de variáveis de ambiente
+    AUTH_USER = os.environ.get('AUTH_USER', 'admin')
+    AUTH_PASS = os.environ.get('AUTH_PASS', 'secret')
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        if username == AUTH_USER and password == AUTH_PASS:
+            session['user'] = username
+            next_url = request.args.get('next') or url_for('index')
+            return redirect(next_url)
+        flash('Usuário ou senha inválidos')
+        return render_template('login.html')
+    # GET
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect(url_for('login'))
 
 
 @app.route('/api/getCarro')

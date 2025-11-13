@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Loja de Carros</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <meta name="description" content="Login para acessar o painel da loja de carros">
+</head>
+<body>
+    <main class="container" style="max-width:420px;margin-top:80px;">
+        <section class="panel">
+            <h2>Entrar</h2>
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <div class="toast error" role="alert" style="margin-bottom:12px">{{ messages[0] }}</div>
+              {% endif %}
+            {% endwith %}
+
+            <form method="post" action="/login" class="form">
+                <label for="username" class="muted">Usuário</label>
+                <input id="username" name="username" type="text" placeholder="admin" required>
+
+                <label for="password" class="muted">Senha</label>
+                <input id="password" name="password" type="password" placeholder="••••••" required>
+
+                <button type="submit" class="btn primary block">Entrar</button>
+            </form>
+
+            <p class="muted" style="margin-top:12px;">Usuário padrão: <code>admin</code> — Senha padrão: <code>secret</code></p>
+        </section>
+    </main>
+</body>
+</html>

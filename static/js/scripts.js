@@ -1,5 +1,8 @@
 const API_URL = '';// local proxy (/api)
 
+// dados em memória para renderização e filtro
+let carrosData = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('carros-container');
     if (container) container.textContent = 'Clique em "Listar Carros" para carregar a lista.';
@@ -39,18 +42,8 @@ function listarCarros() {
         })
         .then(data => {
             console.log('Dados recebidos da API:', data);
-            const container = document.getElementById('carros-container');
-            container.innerHTML = '';
-            if (data.length === 0) {
-                container.textContent = 'Nenhum carro encontrado.';
-                return;
-            }
-            data.forEach(carro => {
-                const div = document.createElement('div');
-                div.className = 'carro-item';
-                div.innerHTML = `<strong>ID:</strong> ${carro.id} <br> <strong>Modelo:</strong> ${carro.modelo} <br> <strong>Preço:</strong> R$ ${carro.preco}`;
-                container.appendChild(div);
-            });
+            carrosData = Array.isArray(data) ? data : [];
+            renderCards(carrosData);
             showToast('success', 'Lista atualizada');
         })
         .catch(error => {
@@ -74,18 +67,8 @@ function getCarro(modelo) {
         })
         .then(data => {
             console.log('Carro encontrado:', data);
-            const container = document.getElementById('carros-container');
-            container.innerHTML = '';
-            if (!data || data.length === 0) {
-                container.textContent = 'Carro não encontrado.';
-                return;
-            }
-            data.forEach(carro => {
-                const div = document.createElement('div');
-                div.className = 'carro-item';
-                div.innerHTML = `<strong>ID:</strong> ${carro.id} <br> <strong>Modelo:</strong> ${carro.modelo} <br> <strong>Preço:</strong> R$ ${carro.preco}`;
-                container.appendChild(div);
-            });
+            carrosData = Array.isArray(data) ? data : [];
+            renderCards(carrosData);
         })
         .catch(error => console.error('Erro ao buscar carro:', error));
 }
@@ -171,3 +154,65 @@ function showToast(type, message, timeout=3500){
     container.appendChild(t);
     setTimeout(()=>{ t.style.opacity = '0'; setTimeout(()=> t.remove(), 400); }, timeout);
 }
+
+/* renderização e utilitários */
+function formatPrice(value){
+    const num = Number(value) || 0;
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+}
+
+function renderCards(list){
+    const container = document.getElementById('carros-container');
+    if(!container) return;
+    container.innerHTML = '';
+    if(!list || list.length === 0){
+        container.innerHTML = '<div class="empty">Nenhum carro encontrado.</div>';
+        return;
+    }
+    list.forEach(carro => {
+        const div = document.createElement('div');
+        div.className = 'carro-item';
+        div.innerHTML = `
+            <div class="carro-thumb" aria-hidden="true"></div>
+            <div class="carro-details">
+                <div class="carro-title"><strong>${escapeHtml(carro.modelo || '—')}</strong></div>
+                <div class="carro-meta">ID: ${carro.id ?? '—'}</div>
+                <div class="carro-price">${formatPrice(carro.preco)}</div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
+}
+
+// busca client-side: filtra carro por modelo ou id
+function filterByQuery(q){
+    const ql = (q || '').toLowerCase().trim();
+    if(!ql) return carrosData;
+    return carrosData.filter(c => {
+        const modelo = String(c.modelo || '').toLowerCase();
+        const id = String(c.id || '');
+        return modelo.includes(ql) || id.includes(ql);
+    });
+}
+
+// debounce util
+function debounce(fn, wait=200){
+    let t;
+    return function(...args){ clearTimeout(t); t = setTimeout(()=> fn.apply(this,args), wait); };
+}
+
+// connect search input
+document.addEventListener('DOMContentLoaded', () => {
+    const search = document.getElementById('search');
+    if(search){
+        search.addEventListener('input', debounce(function(e){
+            const q = e.target.value;
+            const filtered = filterByQuery(q);
+            renderCards(filtered);
+        }, 180));
+    }
+});

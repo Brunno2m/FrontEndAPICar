@@ -17,7 +17,13 @@
                 <input class="header-search" type="search" id="search" placeholder="Pesquisar modelo, marca..." aria-label="Pesquisar carros">
             </div>
             <nav class="nav header-right">
-                <button id="listar-carros-btn" class="btn primary">Listar Carros</button>
+                <div style="display:flex;align-items:center;gap:10px">
+                    {% if user %}
+                        <span class="muted">Olá, <strong>{{ user }}</strong></span>
+                        <a href="/logout" class="btn secondary">Sair</a>
+                    {% endif %}
+                    <button id="listar-carros-btn" class="btn primary">Listar Carros</button>
+                </div>
             </nav>
         </div>
     </header>
