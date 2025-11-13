@@ -1,16 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loja de Carros</title>
+    <meta name="description" content="Catálogo de carros — pesquise, adicione, atualize e remova veículos com interface simples e moderna">
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <header class="site-header">
         <div class="container">
-            <h1 class="brand">Loja de Carros</h1>
-            <nav class="nav">
+            <div class="header-left">
+                <h1 class="brand">Loja de Carros <small>Encontre o veículo ideal</small></h1>
+            </div>
+            <div class="header-center">
+                <input class="header-search" type="search" id="search" placeholder="Pesquisar modelo, marca..." aria-label="Pesquisar carros">
+            </div>
+            <nav class="nav header-right">
                 <button id="listar-carros-btn" class="btn primary">Listar Carros</button>
             </nav>
         </div>
