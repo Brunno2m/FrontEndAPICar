@@ -23,5 +23,20 @@
     "id": 5,
     "modelo": "Clio",
     "preco": 26000
+  },
+  {
+    "id": 6,
+    "modelo": "Sentra",
+    "preco": 26000
+  },
+  {
+    "id": 7,
+    "modelo": "TesteCarro",
+    "preco": 50000
+  },
+  {
+    "id": 8,
+    "modelo": "Xterra",
+    "preco": 899594463
   }
 ]
