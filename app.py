@@ -113,7 +113,7 @@ def save_carro():
     }
     
     CARROS.append(novo_carro)
-    save_carros_to_file()
+    salvar_dados()
     
     return jsonify({'success': True}), 201
 
@@ -142,7 +142,7 @@ def delete_carro():
     CARROS[:] = [c for c in CARROS if c.get('modelo') != modelo]
     
     if len(CARROS) < inicial:
-        save_carros_to_file()
+        salvar_dados()
         return jsonify({'success': True}), 200
     
     return jsonify({'error': 'Carro não encontrado'}), 404
@@ -179,7 +179,7 @@ def update_carro():
     for carro in CARROS:
         if carro.get('modelo') == modelo:
             carro['preco'] = preco
-            save_carros_to_file()
+            salvar_dados()
             return jsonify({'success': True}), 200
     
     return jsonify({'error': 'Carro não encontrado'}), 404
@@ -266,7 +266,7 @@ def api_save_carro():
         novo_carro['image'] = payload.get('image')
     
     CARROS.append(novo_carro)
-    save_carros_to_file()
+    salvar_dados()
     
     return jsonify(novo_carro), 201
 
@@ -287,7 +287,7 @@ def api_update_carro():
             carro['preco'] = novo_preco
             if payload.get('image'):
                 carro['image'] = payload.get('image')
-            save_carros_to_file()
+            salvar_dados()
             return jsonify(carro), 200
     
     return jsonify({'error': 'Carro não encontrado'}), 404
@@ -307,7 +307,7 @@ def api_delete_carro():
     CARROS[:] = [c for c in CARROS if c.get('modelo') != modelo]
     
     if len(CARROS) < inicial:
-        save_carros_to_file()
+        salvar_dados()
         return jsonify({'deleted': True}), 200
     
     return jsonify({'deleted': False, 'message': 'Carro não encontrado'}), 404
