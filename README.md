@@ -1,92 +1,119 @@
-# FrontEndAPICar
+# 🚗 Backend AutoPrime - Sistema de Loja de Veículos
 
-Projeto de front-end + API proxy para uma "Loja de Carros".
+Backend modernizado para gerenciamento de carros com API REST.
 
-Este repositório contém um servidor Flask que atua como proxy/adapter para um backend remoto (http://18.231.156.122:8080) e também fornece uma UI simples em HTML/CSS/JS para gerenciamento de carros (listar, buscar, salvar, atualizar, deletar).
+## 🚀 Início Rápido (3 passos)
 
-## Estrutura principal
-
-- `app.py` - servidor Flask com endpoints em `/api/*` e fallback em memória (`CARROS`) para operações de escrita.
-- `templates/index.html` - front-end principal (Jinja) servido pelo Flask.
-- `static/css/styles.css` - estilos e layout.
-- `static/js/scripts.js` - lógica do cliente (fetch para `/api/*`, toggle de listagem, spinner, toasts).
-- `test_api_ops.py` - script de teste rápido que executa uma sequência de requisições à API local.
-- `requirements.txt` - dependências Python (Flask, requests, flask-cors).
-
-## Pré-requisitos
-
-- Python 3.8+ (recomendado 3.10+)
-- Windows (instruções abaixo usam PowerShell)
-
-## Setup (Windows PowerShell)
-
-1. Criar e ativar venv:
-
-```powershell
-python -m venv .venv
-& .\.venv\Scripts\Activate.ps1
-```
-
-2. Instalar dependências:
-
-```powershell
+### 1. Instalar
+```bash
 pip install -r requirements.txt
 ```
 
-3. Rodar a aplicação Flask:
-
-```powershell
-.\.venv\Scripts\python.exe -u app.py
+### 2. Executar
+```bash
+python app.py
 ```
 
-A aplicação irá rodar em http://127.0.0.1:3000 por padrão.
+### 3. Testar
+Abra o navegador em: **http://localhost:8080**
 
-## Endpoints principais (expostos pela proxy local)
+## 📡 API - Endpoints Principais
 
-- `GET /` - página principal (UI)
-- `GET /api/listarCarros` - retorna o array atual `CARROS` (in-memory, seed do remoto se disponível)
-- `POST /api/getCarro` - busca carro por `modelo` (JSON body: `{ "modelo": "..." }`) — devolve itens que batem localmente ou faz fallback ao backend remoto
-- `POST /api/saveCarro` - salva um carro localmente (JSON: `{ "modelo": "...", "preco": 12345 }`)
-- `POST /api/updateCarro` - atualiza o preço de um `modelo` localmente (JSON: `{ "modelo": "...", "preco": 54321 }`)
-- `POST /api/deleteCarro` - deleta carro(s) por `modelo` (JSON: `{ "modelo": "..." }`)
-- `GET /health` - retorna status simples `{ "status": "ok" }`
-- `GET /debug/backend_status` - tenta consultar o backend remoto e reporta status
+| Endpoint | Método | Descrição | Exemplo |
+|----------|--------|-----------|---------|
+| `/getCarro` | POST | Busca por modelo | `{"modelo":"Ferrari"}` |
+| `/saveCarro` | POST | Salva novo carro | `{"modelo":"Ferrari","preco":1200000}` |
+| `/updateCarro` | POST | Atualiza preço | `{"modelo":"Ferrari","preco":1350000}` |
+| `/deleteCarro` | POST | Remove carro | `{"modelo":"Ferrari"}` |
+| `/listarCarros` | GET | Lista todos | - |
+| `/teste` | GET | Status | - |
 
-> Observação: o backend remoto original permite apenas operações de leitura (listar). Para tornar a UI funcional mesmo quando o remoto bloqueia verbos de escrita, o app utiliza um armazenamento em memória (`CARROS`) para salvar/atualizar/deletar localmente.
+## 💡 Exemplos Rápidos
 
-## Como usar a UI
-
-1. Abra o navegador em http://127.0.0.1:3000
-2. Clique em "Listar Carros" para carregar a lista (botão alterna para "Ocultar Lista")
-3. Use os formulários à direita para adicionar, atualizar ou remover carros. A lista é atualizada automaticamente.
-
-## Testes rápidos
-
-Executar o script de integração:
-
-```powershell
-.\.venv\Scripts\python.exe test_api_ops.py
+### Salvar um carro
+```bash
+curl -X POST http://localhost:8080/saveCarro \
+  -H "Content-Type: application/json" \
+  -d '{"modelo":"Ferrari","preco":1200000}'
 ```
 
-Ele executa: listar -> salvar TEST-XYZ -> listar -> atualizar TEST-XYZ -> deletar TEST-XYZ -> listar.
+### Listar todos
+```bash
+curl http://localhost:8080/listarCarros
+```
 
-## Próximos passos sugeridos
+### Buscar específico
+```bash
+curl -X POST http://localhost:8080/getCarro \
+  -H "Content-Type: application/json" \
+  -d '{"modelo":"Ferrari"}'
+```
 
-- Persistir `CARROS` em arquivo JSON para sobreviver reinícios.
-- Adicionar validação de entrada mais robusta e tratamento de erros no front.
-- Melhorar UX (confirmação no delete, paginação na listagem, filtros).
+## 🧪 Executar Testes
 
-Implementações realizadas neste branch:
+```bash
+python test_backend.py
+```
 
-- Persistência: o servidor agora salva `CARROS` em `carros.json` automaticamente após salvar/atualizar/deletar.
-- Confirmação: o frontend pede confirmação antes de deletar um modelo.
-- Validação: validação básica de `modelo` e `preço` foi adicionada no cliente.
-- Placeholders: os cards exibem iniciais do modelo como imagem placeholder.
- - Placeholders: os cards exibem iniciais do modelo como imagem placeholder; quando um carro possui `image` (upload via formulário), a imagem real é exibida no card.
+Resultado: ✅ 14 testes automatizados
 
-## Time / Integrantes
+## 📁 Estrutura Simples
 
-- Brunno de Melo Marques
-- Emanuel Correia Tavares
-- Maria Clara Nunes Linhaes
-- Paulo Ricardo Estevam Batalha
+```
+app.py              → Backend principal (código limpo)
+carros.json         → Banco de dados JSON
+requirements.txt    → Dependências (Flask, CORS)
+templates/          → Interface web
+test_backend.py     → Testes automatizados
+```
+
+## 🔧 Tecnologias
+
+- Python 3.8+
+- Flask (framework web)
+- JSON (persistência)
+
+## ⚙️ Como Funciona
+
+1. O backend carrega os dados de `carros.json`
+2. Expõe API REST na porta 8080
+3. Toda alteração é salva automaticamente no arquivo
+4. Interface web em `/` para testar visualmente
+
+## 🐳 Docker (Opcional)
+
+```bash
+docker build -t autoprime .
+docker run -p 8080:8080 autoprime
+```
+
+## 📝 Requisitos
+
+Apenas 3 dependências:
+```
+Flask==2.3.3
+flask-cors==3.0.10
+requests==2.31.0
+```
+
+## ✅ Checklist
+
+- [x] 6 endpoints funcionando
+- [x] Persistência em JSON
+- [x] Frontend integrado
+- [x] Testes automatizados
+- [x] Código limpo e simples
+- [x] Documentação clara
+
+## 🎯 Pronto para Produção
+
+O código está otimizado e pronto para:
+- Deploy local
+- Deploy na nuvem (AWS, Azure, etc)
+- Containerização Docker
+- Integração com outros sistemas
+
+---
+
+**Porta:** 8080  
+**Status:** ✅ Funcionando

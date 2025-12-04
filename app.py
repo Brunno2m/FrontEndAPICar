@@ -1,266 +1,358 @@
-from flask import Flask, request, jsonify, render_template, send_from_directory, session, redirect, url_for, flash
+"""
+Backend Sistema AutoPrime - Loja de Veículos
+Porta: 8080
+"""
+
+from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
-import requests
 import os
-from functools import wraps
 import json
+import time
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
-# secret para sessões: configure via env `SECRET_KEY` em produção
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
-
-BACKEND_BASE = 'http://18.231.156.122:8080'
-CARROS_FILE = os.path.join(os.path.dirname(__file__), 'carros.json')
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
-ALLOWED_EXTENSIONS = {'png','jpg','jpeg','gif'}
+# Configurações
+CARROS_FILE = 'carros.json'
+UPLOAD_FOLDER = 'static/uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# armazenamento em memória para permitir operações de escrita locais
+# Banco de dados em memória
 CARROS = []
-CARROS_INITIALIZED = False
-
-def seed_carros_from_remote():
-    global CARROS, CARROS_INITIALIZED
-    # 1) tentar carregar do arquivo local (persistência)
-    try:
-        if os.path.exists(CARROS_FILE):
-            with open(CARROS_FILE, 'r', encoding='utf-8') as f:
-                CARROS = json.load(f) or []
-                CARROS_INITIALIZED = True
-                app.logger.info(f"Carros inicializados a partir do arquivo local: {len(CARROS)} itens")
-                return True
-    except Exception:
-        app.logger.exception('Falha ao carregar CARROS do arquivo local')
-
-    # 2) fallback para backend remoto
-    try:
-        resp = requests.get(f"{BACKEND_BASE}/listarCarros", timeout=5)
-        if resp.status_code == 200:
-            CARROS = resp.json() if isinstance(resp.json(), list) else []
-            CARROS_INITIALIZED = True
-            # persistir arquivo local para futuras execuções
-            try:
-                with open(CARROS_FILE, 'w', encoding='utf-8') as f:
-                    json.dump(CARROS, f, ensure_ascii=False, indent=2)
-            except Exception:
-                app.logger.exception('Falha ao salvar CARROS localmente após seed remoto')
-            app.logger.info(f"Carros inicializados a partir do backend remoto: {len(CARROS)} itens")
-            return True
-    except Exception:
-        app.logger.exception('Não foi possível inicializar CARROS a partir do remoto')
-    return False
 
 
-def save_carros_to_file():
-    try:
-        with open(CARROS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(CARROS, f, ensure_ascii=False, indent=2)
-        return True
-    except Exception:
-        app.logger.exception('Erro ao salvar CARROS em arquivo')
-        return False
+def carregar_dados():
+    """Carrega os carros do arquivo JSON"""
+    global CARROS
+    if os.path.exists(CARROS_FILE):
+        with open(CARROS_FILE, 'r', encoding='utf-8') as f:
+            CARROS = json.load(f)
+    else:
+        CARROS = []
+        salvar_dados()
 
 
-def proxy_request(method, path, params=None, json_data=None):
-    url = f"{BACKEND_BASE}{path}"
-    try:
-        resp = requests.request(method, url, params=params, json=json_data, timeout=10)
-        headers = {}
-        if 'content-type' in resp.headers:
-            headers['Content-Type'] = resp.headers['content-type']
-        # If successful (2xx/3xx/4xx handled by caller), return
-        if resp.status_code < 400:
-            return (resp.content, resp.status_code, headers)
-        # If server returned error, attempt fallback for JSON bodies: send as form data
-        if json_data is not None:
-            try:
-                form_resp = requests.post(url, data=json_data, timeout=10)
-                form_headers = {}
-                if 'content-type' in form_resp.headers:
-                    form_headers['Content-Type'] = form_resp.headers['content-type']
-                return (form_resp.content, form_resp.status_code, form_headers)
-            except Exception:
-                pass
-        return (resp.content, resp.status_code, headers)
-    except Exception as e:
-        app.logger.exception('Erro ao conectar no backend remoto')
-        return (jsonify({'error': 'Falha ao conectar no backend remoto', 'details': str(e)}), 502, {'Content-Type': 'application/json'})
+def salvar_dados():
+    """Salva os carros no arquivo JSON"""
+    with open(CARROS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(CARROS, f, ensure_ascii=False, indent=2)
 
 
-    def allowed_file(filename):
-        return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+# ============================================================================
+# ENDPOINTS DA API - Sistema AutoPrime
+# ============================================================================
 
-
-    @app.route('/api/uploadImage', methods=['POST'])
-    def api_upload_image():
-        if 'file' not in request.files:
-            return jsonify({'error':'no file part'}), 400
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({'error':'no selected file'}), 400
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            # ensure unique filename by prefixing with timestamp
-            import time
-            filename = f"{int(time.time())}_{filename}"
-            dest = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(dest)
-            # return url path
-            return jsonify({'filename': filename, 'url': f"/static/uploads/{filename}"})
-        return jsonify({'error':'file type not allowed'}), 400
-
-
-def login_required(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if not session.get('user'):
-            # preserve next
-            return redirect(url_for('login', next=request.path))
-        return fn(*args, **kwargs)
-    return wrapper
-
-
-@app.route('/')
-@login_required
-def index():
-    return render_template('index.html', user=session.get('user'))
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    # credenciais podem vir de variáveis de ambiente
-    AUTH_USER = os.environ.get('AUTH_USER', 'admin')
-    AUTH_PASS = os.environ.get('AUTH_PASS', 'secret')
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        if username == AUTH_USER and password == AUTH_PASS:
-            session['user'] = username
-            next_url = request.args.get('next') or url_for('index')
-            return redirect(next_url)
-        flash('Usuário ou senha inválidos')
-        return render_template('login.html')
-    # GET
-    return render_template('login.html')
-
-
-@app.route('/logout')
-def logout():
-    session.pop('user', None)
-    return redirect(url_for('login'))
-
-
-@app.route('/api/getCarro')
-def api_get_carro():
-    # manter compatibilidade com GET (query param) e aceitar POST com JSON { modelo }
-    if request.method == 'POST' or request.get_json(silent=True) is not None:
-        data = request.get_json(silent=True) or {}
+@app.route('/getCarro', methods=['POST'])
+def get_carro():
+    """
+    Endpoint: getCarro
+    Método: POST
+    Entrada: modelo (string)
+    Saída: preço do carro
+    """
+    
+    # Aceitar tanto JSON quanto form-data para compatibilidade
+    if request.is_json:
+        data = request.get_json()
         modelo = data.get('modelo')
     else:
-        modelo = request.args.get('modelo')
+        modelo = request.form.get('modelo')
+    
+    if not modelo:
+        return jsonify({'error': 'Modelo não informado'}), 400
+    
+    # Buscar o carro pelo modelo
+    for carro in CARROS:
+        if carro.get('modelo') == modelo:
+            return jsonify({'preco': carro.get('preco')}), 200
+    
+    return jsonify({'error': 'Carro não encontrado'}), 404
 
-    # garantir que CARROS esteja inicializado
-    if not CARROS_INITIALIZED:
-        seed_carros_from_remote()
 
-    # procurar no armazenamento local
-    matches = [c for c in CARROS if c.get('modelo') == modelo]
-    if matches:
-        return jsonify(matches)
+@app.route('/saveCarro', methods=['POST'])
+def save_carro():
+    """
+    Endpoint: saveCarro
+    Método: POST
+    Entrada: modelo, preço (ex: BWM,350000)
+    Saída: não tem
+    """
+    
+    # Aceitar tanto JSON quanto form-data
+    if request.is_json:
+        data = request.get_json()
+        modelo = data.get('modelo')
+        preco = data.get('preco')
+    else:
+        modelo = request.form.get('modelo')
+        preco = request.form.get('preco')
+    
+    if not modelo or preco is None:
+        return jsonify({'error': 'Modelo e preço são obrigatórios'}), 400
+    
+    # Converter preço para número
+    try:
+        preco = float(preco)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Preço inválido'}), 400
+    
+    # Verificar se já existe
+    for carro in CARROS:
+        if carro.get('modelo') == modelo:
+            return jsonify({'error': 'Modelo já existe. Use updateCarro para atualizar'}), 409
+    
+    # Gerar ID único
+    new_id = max([c.get('id', 0) for c in CARROS], default=0) + 1
+    
+    # Criar novo carro
+    novo_carro = {
+        'id': new_id,
+        'modelo': modelo,
+        'preco': preco
+    }
+    
+    CARROS.append(novo_carro)
+    save_carros_to_file()
+    
+    return jsonify({'success': True}), 201
 
-    # fallback para backend remoto (GET)
-    params = {'modelo': modelo} if modelo else None
-    body, status, headers = proxy_request('GET', '/getCarro', params=params)
-    return (body, status, headers)
+
+@app.route('/deleteCarro', methods=['POST'])
+def delete_carro():
+    """
+    Endpoint: deleteCarro
+    Método: POST
+    Entrada: modelo (ex: BWM)
+    Saída: não tem
+    """
+    
+    # Aceitar tanto JSON quanto form-data
+    if request.is_json:
+        data = request.get_json()
+        modelo = data.get('modelo')
+    else:
+        modelo = request.form.get('modelo')
+    
+    if not modelo:
+        return jsonify({'error': 'Modelo não informado'}), 400
+    
+    # Buscar e remover o carro
+    inicial = len(CARROS)
+    CARROS[:] = [c for c in CARROS if c.get('modelo') != modelo]
+    
+    if len(CARROS) < inicial:
+        save_carros_to_file()
+        return jsonify({'success': True}), 200
+    
+    return jsonify({'error': 'Carro não encontrado'}), 404
+
+
+@app.route('/updateCarro', methods=['POST'])
+def update_carro():
+    """
+    Endpoint: updateCarro
+    Método: POST
+    Entrada: modelo, preço (ex: BWM,375000)
+    Saída: não tem
+    """
+    
+    # Aceitar tanto JSON quanto form-data
+    if request.is_json:
+        data = request.get_json()
+        modelo = data.get('modelo')
+        preco = data.get('preco')
+    else:
+        modelo = request.form.get('modelo')
+        preco = request.form.get('preco')
+    
+    if not modelo or preco is None:
+        return jsonify({'error': 'Modelo e preço são obrigatórios'}), 400
+    
+    # Converter preço para número
+    try:
+        preco = float(preco)
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Preço inválido'}), 400
+    
+    # Buscar e atualizar o carro
+    for carro in CARROS:
+        if carro.get('modelo') == modelo:
+            carro['preco'] = preco
+            save_carros_to_file()
+            return jsonify({'success': True}), 200
+    
+    return jsonify({'error': 'Carro não encontrado'}), 404
+
+
+@app.route('/listarCarros', methods=['GET'])
+def listar_carros():
+    """
+    Endpoint: listarCarros
+    Método: GET
+    Entrada: não tem
+    Saída: lista de carros com preços
+    """
+    return jsonify(CARROS), 200
+
+
+@app.route('/teste', methods=['GET'])
+def teste():
+    """
+    Endpoint: teste
+    Método: GET
+    Retorna status do sistema
+    """
+    return jsonify({
+        'status': 'ok',
+        'message': 'Backend AutoPrime funcionando',
+        'total_carros': len(CARROS),
+        'timestamp': time.time()
+    }), 200
+
+
+# ============================================================================
+# ENDPOINTS PARA COMPATIBILIDADE COM FRONTEND EXISTENTE
+# ============================================================================
+
+@app.route('/')
+def index():
+    """Serve a página principal do frontend"""
+    return render_template('index.html')
 
 
 @app.route('/api/getCarro', methods=['POST'])
-def api_get_carro_post():
-    # roteia para a mesma lógica acima
-    return api_get_carro()
-
-
-@app.route('/api/listarCarros')
-def api_listar_carros():
-    # retornar a lista a partir do armazenamento local se possível
-    if not CARROS_INITIALIZED:
-        seed_carros_from_remote()
-    return jsonify(CARROS)
+def api_get_carro():
+    """Wrapper para compatibilidade com frontend - retorna objeto completo"""
+    
+    data = request.get_json()
+    modelo = data.get('modelo') if data else None
+    
+    if not modelo:
+        return jsonify([]), 200
+    
+    # Retornar lista de carros que correspondem (frontend espera array)
+    matches = [c for c in CARROS if c.get('modelo') == modelo]
+    return jsonify(matches), 200
 
 
 @app.route('/api/saveCarro', methods=['POST'])
 def api_save_carro():
-    payload = request.get_json(force=True)
-    # operações de escrita locais: atribuir novo id
-    if not CARROS_INITIALIZED:
-        seed_carros_from_remote()
-    new_id = max([c.get('id', 0) for c in CARROS] or [0]) + 1
-    novo = {'id': new_id, 'modelo': payload.get('modelo'), 'preco': payload.get('preco')}
-    # aceitar imagem opcional (filename armazenado relativo a /static/uploads)
+    """Wrapper para compatibilidade com frontend"""
+    
+    payload = request.get_json()
+    modelo = payload.get('modelo')
+    preco = payload.get('preco')
+    
+    if not modelo or preco is None:
+        return jsonify({'error': 'Modelo e preço são obrigatórios'}), 400
+    
+    # Verificar se já existe (evitar duplicação)
+    for carro in CARROS:
+        if carro.get('modelo') == modelo:
+            return jsonify({'error': 'Modelo já existe. Use updateCarro para atualizar'}), 409
+    
+    # Gerar ID único
+    new_id = max([c.get('id', 0) for c in CARROS], default=0) + 1
+    
+    novo_carro = {
+        'id': new_id,
+        'modelo': modelo,
+        'preco': preco
+    }
+    
+    # Adicionar imagem se fornecida
     if payload.get('image'):
-        novo['image'] = payload.get('image')
-    CARROS.append(novo)
-    # persistir
+        novo_carro['image'] = payload.get('image')
+    
+    CARROS.append(novo_carro)
     save_carros_to_file()
-    return jsonify(novo), 201
+    
+    return jsonify(novo_carro), 201
 
 
 @app.route('/api/updateCarro', methods=['POST'])
 def api_update_carro():
-    payload = request.get_json(force=True)
-    if not CARROS_INITIALIZED:
-        seed_carros_from_remote()
+    """Wrapper para compatibilidade com frontend"""
+    
+    payload = request.get_json()
     modelo = payload.get('modelo')
     novo_preco = payload.get('preco')
-    for c in CARROS:
-        if c.get('modelo') == modelo:
-            c['preco'] = novo_preco
-            # atualizar imagem se fornecida
+    
+    if not modelo or novo_preco is None:
+        return jsonify({'error': 'Modelo e preço são obrigatórios'}), 400
+    
+    for carro in CARROS:
+        if carro.get('modelo') == modelo:
+            carro['preco'] = novo_preco
             if payload.get('image'):
-                c['image'] = payload.get('image')
+                carro['image'] = payload.get('image')
             save_carros_to_file()
-            return jsonify(c)
-    return jsonify({'error': 'modelo não encontrado'}), 404
+            return jsonify(carro), 200
+    
+    return jsonify({'error': 'Carro não encontrado'}), 404
 
 
 @app.route('/api/deleteCarro', methods=['POST'])
 def api_delete_carro():
-    # Accept JSON body or query param
+    """Wrapper para compatibilidade com frontend"""
+    
     data = request.get_json(silent=True)
-    if data and 'modelo' in data:
-        modelo = data['modelo']
-    else:
-        modelo = request.args.get('modelo')
-    if not CARROS_INITIALIZED:
-        seed_carros_from_remote()
-    before = len(CARROS)
+    modelo = data.get('modelo') if data else request.args.get('modelo')
+    
+    if not modelo:
+        return jsonify({'error': 'Modelo não informado'}), 400
+    
+    inicial = len(CARROS)
     CARROS[:] = [c for c in CARROS if c.get('modelo') != modelo]
-    after = len(CARROS)
-    if after < before:
+    
+    if len(CARROS) < inicial:
         save_carros_to_file()
-        return jsonify({'deleted': True})
-    return jsonify({'deleted': False, 'message': 'modelo não encontrado'}), 404
+        return jsonify({'deleted': True}), 200
+    
+    return jsonify({'deleted': False, 'message': 'Carro não encontrado'}), 404
+
+
+@app.route('/api/listarCarros', methods=['GET'])
+def api_listar_carros():
+    """Wrapper para compatibilidade com frontend"""
+    return jsonify(CARROS), 200
+
+
+@app.route('/api/uploadImage', methods=['POST'])
+def api_upload_image():
+    """Endpoint para upload de imagens dos carros"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'Nenhum arquivo enviado'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Arquivo sem nome'}), 400
+    
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        # Adicionar timestamp para evitar conflitos
+        filename = f"{int(time.time())}_{filename}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        return jsonify({
+            'filename': filename,
+            'url': f"/static/uploads/{filename}"
+        }), 200
+    
+    return jsonify({'error': 'Tipo de arquivo não permitido'}), 400
 
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok'})
-
-
-@app.route('/debug/backend_status')
-def backend_status():
-    try:
-        resp = requests.get(f"{BACKEND_BASE}/listarCarros", timeout=5)
-        return jsonify({'ok': True, 'status_code': resp.status_code, 'content_length': len(resp.content)})
-    except Exception as e:
-        app.logger.exception('Erro ao contatar backend remoto')
-        return jsonify({'ok': False, 'error': str(e)}), 502
+    """Endpoint de health check"""
+    return jsonify({'status': 'ok', 'carros': len(CARROS)}), 200
 
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3000))
-    app.logger.info(f"Iniciando Flask na porta {port} (binding 0.0.0.0)...")
+    carregar_dados()
+    port = int(os.environ.get('PORT', 8080))
+    print(f"\n🚗 Backend AutoPrime iniciado na porta {port}")
+    print(f"📍 Acesse: http://localhost:{port}")
+    print(f"📊 Carros cadastrados: {len(CARROS)}\n")
     app.run(host='0.0.0.0', port=port, debug=False)

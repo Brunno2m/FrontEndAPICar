@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "modelo": "BWM",
+    "preco": 375000.0
+  },
+  {
+    "id": 2,
+    "modelo": "Mercedes",
+    "preco": 420000.0
+  },
+  {
+    "id": 3,
+    "modelo": "Ferrari",
+    "preco": 1350000.0
+  },
+  {
+    "id": 4,
+    "modelo": "Porsche",
+    "preco": 850000.0
+  },
+  {
+    "id": 5,
+    "modelo": "Clio",
+    "preco": 26000
+  }
+]

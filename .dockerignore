@@ -1,0 +1,36 @@
+# Ignore arquivos desnecessários
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+ENV/
+env/
+
+# Arquivos de desenvolvimento
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Dados locais (não enviar para produção)
+carros.json
+
+# Uploads locais
+static/uploads/*
+!static/uploads/.gitkeep
