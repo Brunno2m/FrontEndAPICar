@@ -14,18 +14,32 @@
 
 ## 🎯 PASSO A PASSO (copie e cole os comandos)
 
-### 1️⃣ Conecte na EC2 via SSH (pelo Windows)
+### 1️⃣ Envie o arquivo ZIP para a EC2 (do seu Windows)
 
-**No PowerShell ou PuTTY:**
+**Abra o PowerShell onde está o arquivo ZIP e execute:**
+```powershell
+scp -i sua-chave.pem FrontEndAPICar.zip ubuntu@IP-DA-EC2:~
+```
+
+**Substitua:**
+- `sua-chave.pem` → pela chave que você baixou da AWS (ex: `autoprime-key.pem`)
+- `IP-DA-EC2` → pelo IP público da sua instância EC2
+
+**Exemplo real:**
+```powershell
+scp -i C:\Users\Professor\autoprime-key.pem FrontEndAPICar.zip ubuntu@18.232.145.67:~
+```
+
+### 2️⃣ Conecte na EC2 via SSH
+
+**No PowerShell:**
 ```bash
 ssh -i sua-chave.pem ubuntu@IP-DA-EC2
 ```
 
-### 2️⃣ Envie o arquivo ZIP para a EC2
-
-**No PowerShell do Windows (na pasta onde está o ZIP):**
-```powershell
-scp -i sua-chave.pem FrontEndAPICar.zip ubuntu@IP-DA-EC2:~
+**Exemplo real:**
+```bash
+ssh -i C:\Users\Professor\autoprime-key.pem ubuntu@18.232.145.67
 ```
 
 ### 3️⃣ Na EC2, execute este comando único
