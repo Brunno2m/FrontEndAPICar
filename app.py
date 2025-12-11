@@ -16,10 +16,16 @@ CORS(app)
 # Configurações
 CARROS_FILE = 'carros.json'
 UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Banco de dados em memória
 CARROS = []
+
+
+def allowed_file(filename):
+    """Verifica se a extensão do arquivo é permitida"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def carregar_dados():
@@ -39,9 +45,7 @@ def salvar_dados():
         json.dump(CARROS, f, ensure_ascii=False, indent=2)
 
 
-# ============================================================================
-# ENDPOINTS DA API - Sistema AutoPrime
-# ============================================================================
+# Endpoints principais da API
 
 @app.route('/getCarro', methods=['POST'])
 def get_carro():
@@ -196,24 +200,10 @@ def listar_carros():
     return jsonify(CARROS), 200
 
 
-@app.route('/teste', methods=['GET'])
-def teste():
-    """
-    Endpoint: teste
-    Método: GET
-    Retorna status do sistema
-    """
-    return jsonify({
-        'status': 'ok',
-        'message': 'Backend AutoPrime funcionando',
-        'total_carros': len(CARROS),
-        'timestamp': time.time()
-    }), 200
 
 
-# ============================================================================
-# ENDPOINTS PARA COMPATIBILIDADE COM FRONTEND EXISTENTE
-# ============================================================================
+
+# Endpoints do frontend
 
 @app.route('/')
 def index():
