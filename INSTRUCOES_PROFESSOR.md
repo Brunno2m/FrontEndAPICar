@@ -1,37 +1,54 @@
-# 🚀 Instruções Ultra Simples - EC2 já está rodando
+# 🚀 Instruções para Windows - Executar Localmente
 
-## Professor, a EC2 já está configurada. Siga apenas 2 passos:
+## Professor, execute o projeto direto no seu Windows:
+
+---
+
+## 📋 PRÉ-REQUISITOS (instale antes)
+
+1. **Python 3.11+** → https://www.python.org/downloads/
+   - ✅ Marque "Add Python to PATH" na instalação
+
+2. **MySQL 8.0** → https://dev.mysql.com/downloads/installer/
+   - ✅ Durante instalação, configure: User=root, Password=root
 
 ---
 
 ## 🎯 PASSO A PASSO
 
-### 1️⃣ Extraia o ZIP na EC2
+### 1️⃣ Extraia o ZIP
 
-**Cole este comando único (ajuste o caminho do ZIP):**
-```bash
-cd ~ && \
-unzip FrontEndAPICar.zip && \
-cd FrontEndAPICar && \
-python3 -m venv .venv && \
-source .venv/bin/activate && \
-pip install -r requirements.txt && \
-chmod +x setup_and_run.sh && \
-./setup_and_run.sh
+Clique com botão direito no `FrontEndAPICar.zip` → **Extrair Tudo**
+
+### 2️⃣ Abra o PowerShell na pasta do projeto
+
+Navegue até a pasta extraída e abra o PowerShell:
+- Clique com **Shift + Botão Direito** na pasta → **Abrir janela do PowerShell aqui**
+
+Ou digite no PowerShell:
+```powershell
+cd C:\Users\SeuUsuario\Downloads\FrontEndAPICar
 ```
 
-**Se precisar instalar MySQL antes:**
-```bash
-sudo apt-get update && sudo apt-get install -y mysql-server python3-venv unzip && \
-sudo service mysql start && \
-sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root'; FLUSH PRIVILEGES;"
+### 3️⃣ Execute estes comandos no PowerShell
+
+**Instalar dependências:**
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-### 2️⃣ Acesse no navegador
-
-Abra o navegador no seu Windows e acesse:
+**Iniciar o servidor:**
+```powershell
+python app.py
 ```
-http://IP-DA-SUA-EC2:8080
+
+### 4️⃣ Acesse no navegador
+
+Abra o navegador e acesse:
+```
+http://localhost:8080
 ```
 
 **Pronto! ✅**
@@ -40,62 +57,103 @@ http://IP-DA-SUA-EC2:8080
 
 ## 🔄 Para executar novamente depois
 
-Se precisar rodar o projeto novamente (depois de parar):
-
-```bash
-cd ~/FrontEndAPICar
-source .venv/bin/activate
+```powershell
+cd C:\Users\SeuUsuario\Downloads\FrontEndAPICar
+.\.venv\Scripts\Activate.ps1
 python app.py
-```
-
-**Ou com o script:**
-```bash
-cd ~/FrontEndAPICar
-./setup_and_run.sh
 ```
 
 ---
 
-## ⚠️ IMPORTANTE
+## ⚠️ SE DER ERRO "execution of scripts is disabled"
 
-**Porta 8080 deve estar liberada no Security Group da EC2**
+Execute este comando uma vez (como Administrador):
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-**Credenciais do MySQL:**
+Depois tente novamente ativar o ambiente:
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+---
+
+## 🗄️ CONFIGURAÇÃO DO MYSQL
+
+**Credenciais (devem estar configuradas):**
+- Host: localhost
+- Porta: 3306
 - Usuário: root
 - Senha: root
-- Banco: carros (criado automaticamente)
+
+**O sistema cria automaticamente:**
+- ✅ Banco de dados `carros`
+- ✅ Tabela `carros` com estrutura completa
+- ✅ Insere 5 carros de exemplo
 
 ---
 
 ## ✅ O QUE VOCÊ VAI VER
 
-**No navegador:**
+**No navegador (http://localhost:8080):**
 - Interface web moderna
 - 5 carros já cadastrados
-- Formulários funcionando
+- Formulários para adicionar/editar
 - Upload de imagens
+- Busca por modelo
 
-**Endpoints:**
-- `http://IP-EC2:8080` → Interface web
-- `http://IP-EC2:8080/health` → Status do sistema
-- `http://IP-EC2:8080/api/listarCarros` → Lista carros (API)
+**Endpoints da API:**
+- `http://localhost:8080/health` → Status do sistema
+- `http://localhost:8080/api/listarCarros` → Lista todos os carros
+- `http://localhost:8080/` → Interface web completa
 
 ---
 
-## 🚨 SE DER ERRO
+## 🚨 PROBLEMAS COMUNS
 
-**Erro de MySQL:**
-```bash
-sudo service mysql start
+### MySQL não está rodando
+**Solução:**
+- Abra "Serviços" do Windows (Win + R → `services.msc`)
+- Procure "MySQL80" → Botão direito → Iniciar
+
+### Porta 8080 ocupada
+**Solução no PowerShell:**
+```powershell
+netstat -ano | findstr :8080
+taskkill /PID <numero_do_pid> /F
+python app.py
 ```
 
-**Porta ocupada:**
-```bash
-sudo lsof -ti:8080 | xargs sudo kill -9
-cd ~/FrontEndAPICar && source .venv/bin/activate && python app.py
+### Python não reconhecido
+**Solução:**
+- Reinstale Python marcando "Add Python to PATH"
+- Ou use: `py app.py` ao invés de `python app.py`
+
+### Erro ao ativar .venv
+**Solução (PowerShell como Admin):**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-**Ver logs:**
-```bash
-cd ~/FrontEndAPICar && tail -f app.log
+---
+
+## 📝 RESUMO RÁPIDO
+
+```powershell
+# 1. Abrir PowerShell na pasta do projeto
+cd C:\caminho\para\FrontEndAPICar
+
+# 2. Criar ambiente virtual e instalar
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+# 3. Executar
+python app.py
+
+# 4. Acessar
+# http://localhost:8080
 ```
+
+**Tudo funciona automaticamente! MySQL já deve estar rodando no Windows.**
