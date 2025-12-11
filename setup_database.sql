@@ -10,7 +10,7 @@ COLLATE utf8mb4_unicode_ci;
 USE carros;
 
 -- Criar tabela de carros
-CREATE TABLE IF NOT EXISTS carros (
+CREATE TABLE IF NOT EXISTS carro (
     id INT AUTO_INCREMENT PRIMARY KEY,
     modelo VARCHAR(255) NOT NULL UNIQUE,
     preco DECIMAL(12, 2) NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS carros (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Inserir dados de exemplo (opcional)
-INSERT IGNORE INTO carros (modelo, preco) VALUES
+INSERT IGNORE INTO carro (modelo, preco) VALUES
 ('Toyota Corolla', 125000.00),
 ('Honda Civic', 135000.00),
 ('Volkswagen Golf', 115000.00),
@@ -29,7 +29,7 @@ INSERT IGNORE INTO carros (modelo, preco) VALUES
 ('Chevrolet Onix', 75000.00);
 
 -- Exibir carros cadastrados
-SELECT * FROM carros;
+SELECT * FROM carro;
 
 -- Mostrar informações da tabela
-SHOW TABLE STATUS LIKE 'carros';
+SHOW TABLE STATUS LIKE 'carro';

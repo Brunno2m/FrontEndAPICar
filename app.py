@@ -78,7 +78,7 @@ def init_database():
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                CREATE TABLE IF NOT EXISTS carros (
+                CREATE TABLE IF NOT EXISTS carro (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     modelo VARCHAR(255) NOT NULL UNIQUE,
                     preco DECIMAL(12, 2) NOT NULL,
@@ -90,7 +90,7 @@ def init_database():
             """)
             conn.commit()
             cursor.close()
-            print("✓ Tabela 'carros' verificada/criada com sucesso")
+            print("✓ Tabela 'carro' verificada/criada com sucesso")
     except Error as e:
         print(f"✗ Erro ao inicializar banco de dados: {e}")
         raise
@@ -125,7 +125,7 @@ def get_carro():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT preco FROM carros WHERE modelo = %s", (modelo,))
+            cursor.execute("SELECT preco FROM carro WHERE modelo = %s", (modelo,))
             carro = cursor.fetchone()
             cursor.close()
             
@@ -167,7 +167,7 @@ def save_carro():
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO carros (modelo, preco) VALUES (%s, %s)",
+                "INSERT INTO carro (modelo, preco) VALUES (%s, %s)",
                 (modelo, preco)
             )
             conn.commit()
@@ -201,7 +201,7 @@ def delete_carro():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM carros WHERE modelo = %s", (modelo,))
+            cursor.execute("DELETE FROM carro WHERE modelo = %s", (modelo,))
             conn.commit()
             rows_affected = cursor.rowcount
             cursor.close()
@@ -244,7 +244,7 @@ def update_carro():
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "UPDATE carros SET preco = %s WHERE modelo = %s",
+                "UPDATE carro SET preco = %s WHERE modelo = %s",
                 (preco, modelo)
             )
             conn.commit()
@@ -269,7 +269,7 @@ def listar_carros():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT id, modelo, preco, image FROM carros ORDER BY id")
+            cursor.execute("SELECT id, modelo, preco, image FROM carro ORDER BY id")
             carros = cursor.fetchall()
             cursor.close()
             
@@ -307,7 +307,7 @@ def api_get_carro():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT id, modelo, preco, image FROM carros WHERE modelo = %s", (modelo,))
+            cursor.execute("SELECT id, modelo, preco, image FROM carro WHERE modelo = %s", (modelo,))
             matches = cursor.fetchall()
             cursor.close()
             
@@ -337,7 +337,7 @@ def api_save_carro():
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "INSERT INTO carros (modelo, preco, image) VALUES (%s, %s, %s)",
+                "INSERT INTO carro (modelo, preco, image) VALUES (%s, %s, %s)",
                 (modelo, preco, image)
             )
             conn.commit()
@@ -374,19 +374,19 @@ def api_update_carro():
             
             if image:
                 cursor.execute(
-                    "UPDATE carros SET preco = %s, image = %s WHERE modelo = %s",
+                    "UPDATE carro SET preco = %s, image = %s WHERE modelo = %s",
                     (novo_preco, image, modelo)
                 )
             else:
                 cursor.execute(
-                    "UPDATE carros SET preco = %s WHERE modelo = %s",
+                    "UPDATE carro SET preco = %s WHERE modelo = %s",
                     (novo_preco, modelo)
                 )
             
             conn.commit()
             
             if cursor.rowcount > 0:
-                cursor.execute("SELECT id, modelo, preco, image FROM carros WHERE modelo = %s", (modelo,))
+                cursor.execute("SELECT id, modelo, preco, image FROM carro WHERE modelo = %s", (modelo,))
                 carro = cursor.fetchone()
                 cursor.close()
                 
@@ -414,7 +414,7 @@ def api_delete_carro():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM carros WHERE modelo = %s", (modelo,))
+            cursor.execute("DELETE FROM carro WHERE modelo = %s", (modelo,))
             conn.commit()
             rows_affected = cursor.rowcount
             cursor.close()
@@ -432,7 +432,7 @@ def api_listar_carros():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT id, modelo, preco, image FROM carros ORDER BY id")
+            cursor.execute("SELECT id, modelo, preco, image FROM carro ORDER BY id")
             carros = cursor.fetchall()
             cursor.close()
             
@@ -475,7 +475,7 @@ def health():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) as total FROM carros")
+            cursor.execute("SELECT COUNT(*) as total FROM carro")
             result = cursor.fetchone()
             cursor.close()
             total = result[0] if result else 0

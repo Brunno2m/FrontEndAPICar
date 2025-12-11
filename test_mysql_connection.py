@@ -41,9 +41,9 @@ def test_connection():
         cursor.execute(f"USE {DB_NAME}")
         
         # Criar tabela
-        print("\n3️⃣  Criando tabela 'carros'...")
+        print("\n3️⃣  Criando tabela 'carro'...")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS carros (
+            CREATE TABLE IF NOT EXISTS carro (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 modelo VARCHAR(255) NOT NULL UNIQUE,
                 preco DECIMAL(12, 2) NOT NULL,
@@ -53,11 +53,11 @@ def test_connection():
                 INDEX idx_modelo (modelo)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """)
-        print("   ✓ Tabela 'carros' pronta")
+        print("   ✓ Tabela 'carro' pronta")
         
         # Verificar quantos registros existem
         print("\n4️⃣  Verificando dados...")
-        cursor.execute("SELECT COUNT(*) FROM carros")
+        cursor.execute("SELECT COUNT(*) FROM carro")
         count = cursor.fetchone()[0]
         print(f"   ✓ Total de carros cadastrados: {count}")
         
@@ -73,12 +73,12 @@ def test_connection():
             ]
             for modelo, preco in sample_data:
                 try:
-                    cursor.execute("INSERT INTO carros (modelo, preco) VALUES (%s, %s)", (modelo, preco))
+                    cursor.execute("INSERT INTO carro (modelo, preco) VALUES (%s, %s)", (modelo, preco))
                 except mysql.connector.IntegrityError:
                     pass  # Já existe
             
             conn.commit()
-            cursor.execute("SELECT COUNT(*) FROM carros")
+            cursor.execute("SELECT COUNT(*) FROM carro")
             count = cursor.fetchone()[0]
             print(f"   ✓ {count} carros inseridos")
         
