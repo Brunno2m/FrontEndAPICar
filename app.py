@@ -48,35 +48,15 @@ def get_db_connection():
             connection.close()
 
 
-def create_database_if_not_exists():
-    """Cria o banco de dados se não existir"""
-    try:
-        # Conectar sem especificar o banco de dados
-        config_without_db = DB_CONFIG.copy()
-        db_name = config_without_db.pop('database')
-        
-        conn = mysql.connector.connect(**config_without_db)
-        cursor = conn.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
-        cursor.close()
-        conn.close()
-        print(f"✓ Banco de dados '{db_name}' verificado/criado")
-        return True
-    except Error as e:
-        print(f"✗ Erro ao criar banco de dados: {e}")
-        return False
-
-
 def init_database():
-    """Inicializa o banco de dados e cria a tabela se não existir"""
+    """Verifica a conexão com o banco de dados e cria a tabela se não existir"""
     try:
-        # Primeiro garantir que o banco existe
-        if not create_database_if_not_exists():
-            raise Exception("Não foi possível criar o banco de dados")
-        
-        # Agora criar a tabela
+        # Conectar ao banco de dados existente
         with get_db_connection() as conn:
             cursor = conn.cursor()
+            print(f"✓ Conectado ao banco de dados '{DB_CONFIG['database']}'")
+            
+            # Criar a tabela se não existir
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS carro (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -92,7 +72,8 @@ def init_database():
             cursor.close()
             print("✓ Tabela 'carro' verificada/criada com sucesso")
     except Error as e:
-        print(f"✗ Erro ao inicializar banco de dados: {e}")
+        print(f"✗ Erro ao conectar ao banco de dados: {e}")
+        print(f"✗ Certifique-se que o banco '{DB_CONFIG['database']}' existe no MySQL")
         raise
 
 
