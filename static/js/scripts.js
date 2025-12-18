@@ -3,28 +3,9 @@ const API_URL = '';// local proxy (/api)
 // dados em memória para renderização e filtro
 let carrosData = [];
 
-// Flag para evitar múltiplos registros
-let eventListenersRegistered = false;
-
 document.addEventListener('DOMContentLoaded', () => {
-    if (eventListenersRegistered) return;
-    eventListenersRegistered = true;
-    
     const container = document.getElementById('carros-container');
     if (container) container.textContent = 'Clique em "Listar Carros" para carregar a lista.';
-    // ligar submit do form add para usar nossa função saveCarro
-    const addForm = document.getElementById('add-carro-form');
-    if(addForm){
-        addForm.addEventListener('submit', function(e){ e.preventDefault(); const modelo = document.getElementById('modelo').value; const preco = document.getElementById('preco').value; saveCarro(modelo, preco); });
-    }
-    const updateForm = document.getElementById('update-carro-form');
-    if(updateForm){
-        updateForm.addEventListener('submit', function(e){ e.preventDefault(); const modelo = document.getElementById('update-modelo').value; const preco = document.getElementById('update-preco').value; updateCarro(modelo, preco); });
-    }
-    const deleteForm = document.getElementById('delete-carro-form');
-    if(deleteForm){
-        deleteForm.addEventListener('submit', function(e){ e.preventDefault(); const modelo = document.getElementById('delete-modelo').value; deleteCarro(modelo); });
-    }
     // configurar preview de imagem no formulário de adicionar
     const imageInput = document.getElementById('image');
     const preview = document.getElementById('image-preview');

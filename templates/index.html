@@ -40,7 +40,7 @@
 
             <div class="card action-card">
                 <h3>Adicionar Carro</h3>
-                <form id="add-carro-form" class="form">
+                <form id="add-carro-form" class="form" onsubmit="event.preventDefault(); saveCarro(document.getElementById('modelo').value, document.getElementById('preco').value); return false;">
                     <input type="text" id="modelo" name="modelo" placeholder="Modelo" required>
                     <input type="number" id="preco" name="preco" placeholder="Preço" required min="0" step="0.01">
                     <label class="muted">Imagem (opcional)</label>
@@ -58,7 +58,7 @@
 
             <div class="card action-card">
                 <h3>Atualizar Carro</h3>
-                <form id="update-carro-form" class="form">
+                <form id="update-carro-form" class="form" onsubmit="event.preventDefault(); updateCarro(document.getElementById('update-modelo').value, document.getElementById('update-preco').value); return false;">
                     <input type="text" id="update-modelo" name="modelo" placeholder="Modelo" required>
                     <input type="number" id="update-preco" name="preco" placeholder="Novo preço" required min="0" step="0.01">
                     <button type="submit" class="btn secondary block">Atualizar</button>
@@ -67,7 +67,7 @@
 
             <div class="card action-card">
                 <h3>Deletar Carro</h3>
-                <form id="delete-carro-form" class="form">
+                <form id="delete-carro-form" class="form" onsubmit="event.preventDefault(); deleteCarro(document.getElementById('delete-modelo').value); return false;">
                     <input type="text" id="delete-modelo" name="modelo" placeholder="Modelo" required>
                     <button type="submit" class="btn danger block">Deletar</button>
                 </form>
@@ -82,26 +82,6 @@
     <script>
         document.getElementById('listar-carros-btn').addEventListener('click', function() {
             toggleListarCarros();
-        });
-
-        document.getElementById('add-carro-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const modelo = document.getElementById('modelo').value;
-            const preco = document.getElementById('preco').value;
-            saveCarro(modelo, preco);
-        });
-
-        document.getElementById('update-carro-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const modelo = document.getElementById('update-modelo').value;
-            const preco = document.getElementById('update-preco').value;
-            updateCarro(modelo, preco);
-        });
-
-        document.getElementById('delete-carro-form').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const modelo = document.getElementById('delete-modelo').value;
-            deleteCarro(modelo);
         });
     </script>
 </body>
