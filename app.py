@@ -49,31 +49,23 @@ def get_db_connection():
 
 
 def init_database():
-    """Verifica a conexão com o banco de dados e cria a tabela se não existir"""
+    """Verifica a conexão com o banco de dados"""
     try:
         # Conectar ao banco de dados existente
         with get_db_connection() as conn:
             cursor = conn.cursor()
             print(f"✓ Conectado ao banco de dados '{DB_CONFIG['database']}'")
             
-            # Criar a tabela se não existir
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS carro (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    modelo VARCHAR(255) NOT NULL UNIQUE,
-                    preco DECIMAL(12, 2) NOT NULL,
-                    image VARCHAR(500),
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                    INDEX idx_modelo (modelo)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            """)
-            conn.commit()
+            # Verificar se a tabela existe
+            cursor.execute("SHOW TABLES LIKE 'carro'")
+            if cursor.fetchone():
+                print("✓ Tabela 'carro' encontrada")
+            else:
+                print("⚠ Aviso: Tabela 'carro' não encontrada no banco")
             cursor.close()
-            print("✓ Tabela 'carro' verificada/criada com sucesso")
     except Error as e:
         print(f"✗ Erro ao conectar ao banco de dados: {e}")
-        print(f"✗ Certifique-se que o banco '{DB_CONFIG['database']}' existe no MySQL")
+        print(f"✗ Certifique-se que o banco '{DB_CONFIG['database']}' e a tabela 'carro' existem no MySQL")
         raise
 
 
