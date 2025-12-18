@@ -98,7 +98,7 @@ def get_carro():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT preco FROM carro WHERE modelo = %s", (modelo,))
+            cursor.execute("SELECT id, modelo, preco FROM carro WHERE modelo = %s", (modelo,))
             carro = cursor.fetchone()
             cursor.close()
             
@@ -242,7 +242,7 @@ def listar_carros():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT id, modelo, preco, image FROM carro ORDER BY id")
+            cursor.execute("SELECT id, modelo, preco FROM carro ORDER BY id")
             carros = cursor.fetchall()
             cursor.close()
             
@@ -304,22 +304,18 @@ def api_save_carro():
     if not modelo or preco is None:
         return jsonify({'error': 'Modelo e preço são obrigatórios'}), 400
     
-    image = payload.get('image')
-    
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "INSERT INTO carro (modelo, preco, image) VALUES (%s, %s, %s)",
-                (modelo, preco, image)
+                "INSERT INTO carro (modelo, preco) VALUES (%s, %s)",
+                (modelo, preco)
             )
             conn.commit()
             new_id = cursor.lastrowid
             cursor.close()
             
             novo_carro = {'id': new_id, 'modelo': modelo, 'preco': preco}
-            if image:
-                novo_carro['image'] = image
             
             return jsonify(novo_carro), 201
     except mysql.connector.IntegrityError:
@@ -339,27 +335,19 @@ def api_update_carro():
     if not modelo or novo_preco is None:
         return jsonify({'error': 'Modelo e preço são obrigatórios'}), 400
     
-    image = payload.get('image')
-    
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
             
-            if image:
-                cursor.execute(
-                    "UPDATE carro SET preco = %s, image = %s WHERE modelo = %s",
-                    (novo_preco, image, modelo)
-                )
-            else:
-                cursor.execute(
-                    "UPDATE carro SET preco = %s WHERE modelo = %s",
-                    (novo_preco, modelo)
-                )
+            cursor.execute(
+                "UPDATE carro SET preco = %s WHERE modelo = %s",
+                (novo_preco, modelo)
+            )
             
             conn.commit()
             
             if cursor.rowcount > 0:
-                cursor.execute("SELECT id, modelo, preco, image FROM carro WHERE modelo = %s", (modelo,))
+                cursor.execute("SELECT id, modelo, preco FROM carro WHERE modelo = %s", (modelo,))
                 carro = cursor.fetchone()
                 cursor.close()
                 
@@ -405,7 +393,7 @@ def api_listar_carros():
     try:
         with get_db_connection() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT id, modelo, preco, image FROM carro ORDER BY id")
+            cursor.execute("SELECT id, modelo, preco FROM carro ORDER BY id")
             carros = cursor.fetchall()
             cursor.close()
             
